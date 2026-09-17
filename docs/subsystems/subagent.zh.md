@@ -145,7 +145,7 @@ persisted Session
 
 `running` 表示 Agent 拥有活跃的 driver 或 maintenance 任务；`waiting` 表示没有活跃的 Agent 工作，但其 Inbox 非空或仍拥有至少一个尚未完成 dispose 的子 Activation；`settled` 表示没有活跃的 Agent 工作、Inbox 为空且其拥有的每个子级都已 dispose，此时管理器会 dispose [`AgentHandle`](core.zh.md#creation-and-ownership) 并移除该 Activation。管理器根据 `Agent.whenIdle()`、`Agent.inbox.hasPending`、其拥有的子级集合，以及让过期观察失效的 Activation generation 推导这些内部条件，而非维护第二套执行状态机。最终 Session flush 之后，child-lock 决策会通过 `Agent.runMaintenance()` 的同步 task 入口占用 idle 阶段，并在同一个 JavaScript turn 内关闭准入。这条保守规则不区分投递模式：`Agent.inject()` 停放的 context 可以让空闲 Activation 及其在线祖先继续驻留，直到唤醒投递将其 claim、queue 变更将其移除，或 manager teardown 将其丢弃。
 
-Agent 收件箱是唯一队列。每条 Agent 消息都使用 `Agent.steer()`：空闲目标会启动一个轮次，运行中目标则在最近的 step 边界领取消息。浏览器 `subagent.prompt` Remote 会另行通过同一条内部准入路径携带 `delivery: 'queue' | 'steer'`；Queue 开启后续 FIFO 轮次，Steer 保留 Agent loop 的 best-effort 最近 step 行为以及消息的人类来源。投递成功会返回被接受的 `MessageId`；既有的 `agent/inbox/inserted`、`agent/inbox/claimed` 与 `agent/inbox/discarded` 事件仍是消息生命周期的观测点，继续执行层不定义第二条队列。
+Agent 收件箱是唯一队列。每条 Agent 消息都使用 `Agent.steer()`：空闲目标会启动一个轮次，运行中目标则在最近的 step 边界领取消息。浏览器 `subagent.prompt` Remote 会另行通过同一条内部准入路径携带 `delivery: 'queue' | 'steer' | 'interrupt'`。Queue 开启后续 FIFO 轮次，Steer 保留 Agent loop 的 best-effort 最近 step 行为，Interrupt 则保留待处理工作，取消仍在运行的 turn，再追加一个新的 FIFO turn。投递成功会返回被接受的 `MessageId`；既有 inbox splice 事件仍是消息生命周期的观测点，继续执行层不定义第二条队列。
 
 权限来自确切在线 sender。parent 到 child 的投递要求目标的 `SessionHeader.parentSession` 指向 sender；child 到 parent 的投递要求 sender 的驻留 Activation 指向目标。sibling、相隔多于一条边的 ancestor、self-target、陈旧 Agent 对象与一次性 child 都会被拒绝。每条已接受消息都以 `Agent <sender-id> sent a message:` 作为前缀，并记录 `AgentMessageSource`；来源信息记录 sender，但不授予权限。
 

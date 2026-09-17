@@ -266,7 +266,7 @@ function mount(
           removeAttachment={() => {}}
           resolveDraftAttachments={() => []}
           toggleCommandMenu={vi.fn()}
-          useBusyEnter={bindSnapshotSelector(createSnapshotStore<'queue' | 'steer'>('queue'))}
+          useBusyEnter={bindSnapshotSelector(createSnapshotStore<'queue' | 'steer' | 'interrupt'>('queue'))}
           useNotices={bindSnapshotSelector(wiring.notices)}
           useLexicon={bindSnapshotSelector(wiring.lexicon)}
           useMenuLauncher={bindSnapshotSelector(createSnapshotStore<string | null>(null))}

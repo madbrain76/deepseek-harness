@@ -522,11 +522,11 @@ describe('web e2e: settings modal and General preferences', () => {
     const dialog = page.getByRole('dialog', { name: '设置' })
     await dialog.waitFor({ timeout: 10_000 })
     await dialog.getByRole('button', { name: '排队发送' }).click()
-    await page.getByRole('menuitem', { name: '插话发送' }).click()
-    await dialog.getByRole('button', { name: '插话发送' }).waitFor({ timeout: 10_000 })
+    await page.getByRole('menuitem', { name: '中断并发送' }).click()
+    await dialog.getByRole('button', { name: '中断并发送' }).waitFor({ timeout: 10_000 })
     expect(await page.evaluate(() => localStorage.getItem('dsh.conversation.busyEnter'))).toBeNull()
     await expect.poll(async () => readFile(join(scaffold.harnessHome, 'settings.yaml'), 'utf8'), { timeout: 5_000 })
-      .toMatch(/ui-conversation:\n\s+busyEnter: steer/)
+      .toMatch(/ui-conversation:\n\s+busyEnter: interrupt/)
     await page.keyboard.press('Escape')
 
     const warningStart = tripwire.warnings.length
@@ -535,7 +535,7 @@ describe('web e2e: settings modal and General preferences', () => {
     acknowledgeReloadConnectionLoss(tripwire, warningStart)
     await page.getByRole('button', { name: '设置', exact: true }).click()
     const reloaded = page.getByRole('dialog', { name: '设置' })
-    await reloaded.getByRole('button', { name: '插话发送' }).waitFor({ timeout: 10_000 })
+    await reloaded.getByRole('button', { name: '中断并发送' }).waitFor({ timeout: 10_000 })
 
     const second = await launchWebScaffold({ harnessHome: scaffold.harnessHome })
     const secondPage = await browser.newPage({ viewport: { width: 1680, height: 1000 }, locale: ZH_BROWSER_LOCALE })
@@ -546,7 +546,7 @@ describe('web e2e: settings modal and General preferences', () => {
       await secondPage.waitForSelector('[class*="frame"]', { timeout: 30_000 })
       await secondPage.getByRole('button', { name: '设置', exact: true }).click()
       await secondPage.getByRole('dialog', { name: '设置' })
-        .getByRole('button', { name: '插话发送' }).waitFor({ timeout: 10_000 })
+        .getByRole('button', { name: '中断并发送' }).waitFor({ timeout: 10_000 })
       expect(await secondPage.evaluate(() => localStorage.getItem('dsh.conversation.busyEnter'))).toBeNull()
       expect(secondTripwire.pageErrors).toEqual([])
       expect(secondTripwire.warnings).toEqual([])
@@ -555,7 +555,7 @@ describe('web e2e: settings modal and General preferences', () => {
       await second.close()
     }
 
-    await reloaded.getByRole('button', { name: '插话发送' }).click()
+    await reloaded.getByRole('button', { name: '中断并发送' }).click()
     await page.getByRole('menuitem', { name: '排队发送' }).click()
     await reloaded.getByRole('button', { name: '排队发送' }).waitFor({ timeout: 10_000 })
     expect(await page.evaluate(() => localStorage.getItem('dsh.conversation.busyEnter'))).toBeNull()

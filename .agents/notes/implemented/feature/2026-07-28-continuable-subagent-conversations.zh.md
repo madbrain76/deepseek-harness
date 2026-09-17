@@ -117,7 +117,7 @@ activation-owner 作用域之所以存在，是因为普通 Cordis owner effect 
 
 ### Agent 与人类调度
 
-每条已接受的 Agent 消息都使用 `Agent.steer()`。运行中的目标会在最近的 step 边界领取消息；空闲或冷恢复的目标会启动一个轮次。浏览器编写的人类输入会另行通过 `subagent.prompt` 携带 `delivery: 'queue' | 'steer'`：Queue 开启后续 FIFO 轮次，Steer 使用相同的 best-effort 最近 step 调度，并保留消息的人类来源。公开服务不为 Agent 消息提供调用方可选的调度模式。
+每条已接受的 Agent 消息都使用 `Agent.steer()`。运行中的目标会在最近的 step 边界领取消息；空闲或冷恢复的目标会启动一个轮次。浏览器编写的人类输入会另行通过 `subagent.prompt` 携带 `delivery: 'queue' | 'steer' | 'interrupt'`：Queue 开启后续 FIFO 轮次，Steer 使用相同的 best-effort 最近 step 调度，Interrupt 取消运行中的 turn 后排入新 turn，且不改变消息的人类来源。公开服务不为 Agent 消息提供调用方可选的调度模式。
 
 ### 权限与已记录的发送方身份
 

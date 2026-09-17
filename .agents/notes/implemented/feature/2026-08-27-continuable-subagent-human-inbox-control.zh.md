@@ -14,13 +14,13 @@ Status: implemented
 
 在线可继续子级公开普通的人类 inbox 控制，不增加另一套 queue、Remote endpoint、queue action 或面向 Host 的 subagent 操作。一次性子级继续只读。
 
-现有 `SubagentPromptRequest` 携带 `delivery: 'queue' | 'steer'`。Client 把 `Session.prompt(content, mode)` 已选出的 mode 经 `subagent.prompt` 原样转发。Remote 仍要求确切在线直接父级，随后使用一个包内 continuation manager 投递操作。Queue 调用 `Agent.followup(message)`；steer 调用 `Agent.steer(message)`。两条路径共享 child lock、冷恢复、最终父级重新鉴权、调用方 signal 截止、`MessageId` 创建、回滚与 dispose 竞态处理。该人类选择不新增公开调度方法或模型工具；由其他决策拥有的 `sendMessage()` 与面向模型的 `send_message` 操作保留固定的相邻 Agent Steer 语义。
+现有 `SubagentPromptRequest` 携带 `delivery: 'queue' | 'steer' | 'interrupt'`。Client 把 `Session.prompt(content, mode)` 已选出的 mode 经 `subagent.prompt` 原样转发。Remote 仍要求确切在线直接父级，随后使用一个包内 continuation manager 投递操作。Queue 调用 `Agent.followup(message)`；Steer 调用 `Agent.steer(message)`；Interrupt 保留 inbox，对运行中的目标调用 `Agent.cancel()`，再在不让出执行权的情况下调用 `Agent.followup(message)`。所有路径共享 child lock、冷恢复、最终父级重新鉴权、调用方 signal 截止、`MessageId` 创建、回滚与 dispose 竞态处理。该人类选择不新增公开调度方法或模型工具；由其他决策拥有的 `sendMessage()` 与面向模型的 `send_message` 操作保留固定的相邻 Agent Steer 语义。
 
-浏览器为可继续子级提供普通的繁忙态 Enter／Cmd+Enter Queue／Steer 偏好、QueueDock Edit／Remove／Steer 操作，以及空草稿 steer-all 手势。Send 与 Stop 继续是独立控制。Composer prompt 会创建新的已准入工作，因此仍要求在线父级。QueueDock 变更直接寻址已经在线的 inbox 工作，所以父级离线时仍可使用；父级离线的 composer 继续锁定。
+浏览器为可继续子级提供普通的繁忙态 Enter Queue／Steer／Interrupt 偏好、QueueDock Edit／Remove／Steer 操作，以及空草稿 steer-all 手势。选中 Queue 时 Cmd/Ctrl+Enter 使用 Steer，其他情况使用 Queue。Send 与 Stop 继是独立控制。Composer prompt 会创建新的已准入工作，因此仍要求在线父级。QueueDock 变更直接寻址已经在线的 inbox 工作，所以父级离线时仍可使用；父级离线的 composer 继续锁定。
 
 现有 `session.updateQueue(itemId, action)` 会解析确切在线 Agent，并且只有 subagent-owned Session 的当前 projected identity 为 continuable、descriptor 序号属于 child 自身的非 seed suffix 时才会准入。在线 one-shot Agent 以及缺失、仅继承或无效的 identity 都会继续触发所有权失败。Agent 不存在时返回 `queue-item-not-found`，且不会冷恢复子级。对在线 inbox occurrence 变更而言，目标 Session id 已是充分的人类权限；无需 parent 地址。Edit 与 Remove 保留既有完整 `nextTurn` 和 `nextStep` 语义，包括插件注入的 context；Steer 要求排队 occurrence，且 command 开始时 Agent 必须报告 running。
 
-Continuation manager 不保留第二套消息 reservation 状态。一个私有 `SubagentInbox` 会把 Queue 与 Steer 委托给 Agent inbox，并持有 Activation 既有的 closing promise。自然结算会等待 `Agent.whenIdle()`、child Inbox 为空以及所拥有的每个子级完成 dispose。管理器会在 child lock 内确认 Inbox、owned-child set 与 wake generation，再在准入保持开放时 flush 最终 Session 状态。最终 child-lock 决策会重新验证 Session 序号与相同的驻留事实，然后同步启动一个 `Agent.runMaintenance()` 任务；该任务的入口会占用 idle 阶段，并在同一个 JavaScript turn 内关闭包装层。每个待处理 Inbox occurrence 都会保留 Activation，无论其投递模式或来源如何。由 manager 所有的投递、Inbox claim 或 discard，以及所拥有子级的释放都会更新 wake generation。flush 期间直接接受的 Agent 工作要么改变最终 Session 或驻留观察，要么保持活跃并阻止最终 maintenance 任务启动，要么在重验前完成。
+Continuation manager 不保留第二套消息 reservation 状态。一个私有 `SubagentInbox` 会把 Queue、Steer 与 Interrupt 委托给 Agent inbox，并持有 Activation 既有的 closing promise。自然结算会等待 `Agent.whenIdle()`、child Inbox 为空以及所拥有的每个子级完成 dispose。管理器会在 child lock 内确认 Inbox、owned-child set 与 wake generation，再在准入保持开放时 flush 最终 Session 状态。最终 child-lock 决策会重新验证 Session 序号与相同的驻留事实，然后同步启动一个 `Agent.runMaintenance()` 任务；该任务的入口会占用 idle 阶段，并在同一个 JavaScript turn 内关闭包装层。每个待处理 Inbox occurrence 都会保留 Activation，无论其投递模式或来源如何。由 manager 所有的投递、Inbox claim 或 discard，以及所拥有子级的释放都会更新 wake generation。flush 期间直接接受的 Agent 工作要么改变最终 Session 或驻留观察，要么保持活跃并阻止最终 maintenance 任务启动，要么在重验前完成。
 
 QueueDock Steer 在 command 准入一个正在运行的排队 occurrence 后，采用 Agent 的 best-effort 投递。如果排队 occurrence 先被 claim，`queue-item-not-found` 表示其普通 Queue 投递已经开始。如果活跃取消在同步转移期间先发生，Agent steering 会把消息追加到 `nextTurn`、锁存唤醒，Session command 仍然成功。在该 fallback 情况下，选中消息会移到 Queue 剩余项之后。新组合的 Steer 使用同样的 fallback，错过最近步骤时仍保证可投递。
 
@@ -48,4 +48,4 @@ QueueDock Steer 在 command 准入一个正在运行的排队 occurrence 后，�
 
 Inbox notification 保留 occurrence 语义，不携带 continuation 驻留状态。Claim 与 discard notification 只负责在待处理工作变化后唤醒 settlement；`whenIdle()`、最终 idle 阶段 maintenance 任务、`Inbox.hasPending`、owned-child set、Activation generation 与 Session 序号无需依赖调度顺序、消息身份或来源即可决定何时安全 dispose。最终 flush 位于 closing cutoff 之前，因此 detached hook、job completion 或直接 Agent 投递只要在该 await 期间被接受，就会让观察失效，而不会被随后发生的 dispose 停止。仍然活跃的 maintenance 会阻止最终任务占用 idle 阶段；在 flush 期间开始并结束的 maintenance 已在 dispose 前完成。仅持有被注入 context 的 child 即使没有 driver 必须认领它，也会保持驻留；如果之后没有唤醒投递、queue removal 或 manager teardown，该 child 及其在线祖先可以在进程生命周期内一直驻留。重放出的 Inbox 遵循同一条保守规则，无需重建每条待处理消息的投递方式。
 
-模型侧调度保持固定，不由调用方选择。相邻 Agent 的 `send_message` 工具始终使用 Steer，只有浏览器人类路径选择 Queue 或 Steer。
+模型侧调度保持固定，不由调用方选择。相邻 Agent 的 `send_message` 工具始终使用 Steer，只有浏览器人类路径选择 Queue、Steer 或 Interrupt。

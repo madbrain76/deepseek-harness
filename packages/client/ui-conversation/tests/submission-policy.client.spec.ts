@@ -20,6 +20,11 @@ describe('resolveSubmitMode', () => {
     expect(resolveSubmitMode('steer', false, 'enter', true)).toBe('queue')
     expect(resolveSubmitMode('steer', false, 'accelerated', true)).toBe('queue')
     expect(resolveSubmitMode('steer', true, 'enter', false)).toBe('queue')
+
+    expect(resolveSubmitMode('interrupt', true, 'enter', true)).toBe('interrupt')
+    expect(resolveSubmitMode('interrupt', true, 'accelerated', true)).toBe('queue')
+    expect(resolveSubmitMode('interrupt', false, 'enter', true)).toBe('queue')
+    expect(resolveSubmitMode('interrupt', true, 'enter', false)).toBe('queue')
   })
 })
 
@@ -33,6 +38,9 @@ describe('ComposerSubmissionPolicy', () => {
     policy.setBusyEnter('steer')
     expect(changed).toHaveBeenCalledTimes(1)
     expect(policy.busyEnter.getSnapshot()).toBe('steer')
+    policy.setBusyEnter('interrupt')
+    expect(changed).toHaveBeenCalledTimes(2)
+    expect(policy.busyEnter.getSnapshot()).toBe('interrupt')
   })
 
   it('writes an explicit change through the scope after publishing it locally', () => {

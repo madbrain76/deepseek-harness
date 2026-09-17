@@ -222,16 +222,17 @@ export class Session implements SessionFace {
   }
 
   /**
-   * Send (queue/steer passed through 1:1); failures land in the snapshot's promptError.
+   * Send (queue/steer/interrupt passed through 1:1); failures land in the snapshot's promptError.
    * @param content - text, browser-owned temporary image uploads, and staged-file receipts.
-   * @param mode - queue appends after the current turn; steer interrupts it.
+   * @param mode - Queue appends a turn, Steer targets the nearest step, and
+   * Interrupt cancels the active turn before appending a fresh turn.
    * @param signal - optional caller cancellation for the complete admission round-trip.
    * @param requestId - identity from {@link beginSubmission}; a failed identified prompt retires its echo.
    * @returns the prompt result (also mirrored into promptError on failure).
    */
   async prompt(
     content: PromptContentPart[],
-    mode: 'queue' | 'steer',
+    mode: 'queue' | 'steer' | 'interrupt',
     signal?: AbortSignal,
     requestId?: SessionRequestId,
   ): Promise<RemoteResult<{ accepted: true }>> {

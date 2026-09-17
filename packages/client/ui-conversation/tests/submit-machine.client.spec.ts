@@ -29,7 +29,7 @@ function effectAt<T extends InputEffect['type']>(
 }
 
 /** Drive plain → adjudicating and hand back the minted attempt. */
-function enterAdjudicating(m: SubmitMachine, draft: string, mode: 'queue' | 'steer' = 'queue'): SubmitAttempt {
+function enterAdjudicating(m: SubmitMachine, draft: string, mode: 'queue' | 'steer' | 'interrupt' = 'queue'): SubmitAttempt {
   const fx = m.dispatch({ type: 'enter', mode, draft })
   return effectAt(fx, 0, 'adjudicate').attempt
 }

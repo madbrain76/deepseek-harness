@@ -9,7 +9,7 @@ export const CONVERSATION_SETTINGS_NAMESPACE = 'ui-conversation'
 export const BUSY_ENTER_FIELD = 'busyEnter'
 
 /** Busy-Enter behaviors accepted at settings and input boundaries. */
-export const BUSY_ENTER_BEHAVIORS = ['queue', 'steer'] as const
+export const BUSY_ENTER_BEHAVIORS = ['queue', 'steer', 'interrupt'] as const
 
 /** Configurable meaning of plain Enter while the addressed agent is busy. */
 export type BusyEnterBehavior = typeof BUSY_ENTER_BEHAVIORS[number]

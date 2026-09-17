@@ -314,7 +314,7 @@ interface FixtureSessionApi {
   prompt(request: {
     readonly requestId: string
     readonly sessionId: SessionId
-    readonly mode: 'queue' | 'steer'
+    readonly mode: 'queue' | 'steer' | 'interrupt'
     readonly content: readonly FixturePromptPart[]
     readonly clientTimeZone?: string
   }): Promise<ConnectionRpcResult<unknown>>

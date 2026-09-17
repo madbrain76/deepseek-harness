@@ -131,7 +131,7 @@ interface FixtureSessionRequests {
   }
   prompt: {
     readonly sessionId: SessionId
-    readonly mode: 'queue' | 'steer'
+    readonly mode: 'queue' | 'steer' | 'interrupt'
     readonly content: readonly ({ readonly type: 'text'; readonly text: string } | {
       readonly type: 'image'
       readonly mediaType: 'image/png' | 'image/jpeg' | 'image/webp' | 'image/gif'

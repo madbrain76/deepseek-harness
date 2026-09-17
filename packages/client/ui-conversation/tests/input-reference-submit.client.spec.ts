@@ -76,7 +76,7 @@ describe('reference submission', () => {
     const sink = vi.fn<(
       _text: string,
       _imageIds: readonly DraftAttachmentId[],
-      _mode: 'queue' | 'steer',
+      _mode: 'queue' | 'steer' | 'interrupt',
       _signal: AbortSignal,
     ) => Promise<SubmitOutcome>>()
       .mockResolvedValueOnce({ kind: 'error', text: 'snapshot unavailable' })

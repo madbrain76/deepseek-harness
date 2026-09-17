@@ -360,8 +360,14 @@ export class SessionCommandController {
           )
         }
         using binding = this.ctx.fileUploads.bindPrompt(agent, admission.receiptIds, request.requestId)
-        if (request.mode === 'steer') agent.steer(message)
-        else agent.followup(message)
+        if (request.mode === 'steer') {
+          agent.steer(message)
+        } else {
+          if (request.mode === 'interrupt' && agent.status === 'running') {
+            agent.cancel({ kind: 'user' }, { keepInbox: true })
+          }
+          agent.followup(message)
+        }
         binding.commit()
       } catch (error) {
         if (remoteErrorOf(error) !== undefined) throw error

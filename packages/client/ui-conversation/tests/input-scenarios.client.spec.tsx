@@ -170,7 +170,7 @@ async function scopedBench(register?: (inputTriggers: InputTriggerService) => vo
       file: new File([Uint8Array.of(1)], `${id}.png`, { type: 'image/png' }),
       previewUrl: `blob:${id}`,
     })),
-    useBusyEnter: bindSnapshotSelector(createSnapshotStore<'queue' | 'steer'>('queue')),
+    useBusyEnter: bindSnapshotSelector(createSnapshotStore<'queue' | 'steer' | 'interrupt'>('queue')),
     toggleCommandMenu: (selection) => {
       const snapshot = shell.snapshot
       controller.toggleSource('command', {

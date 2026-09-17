@@ -360,7 +360,7 @@ export const InputBar = memo(function InputBar({
   const primaryLabel = primaryStops
     ? t('input.stop')
     : running && steeringAvailable && !disabled && !uploadsPending && plainMessageDraft
-      ? t(primarySubmitMode === 'steer' ? 'input.send.steer' : 'input.send.queue')
+      ? t(`input.send.${primarySubmitMode}`)
       : t('input.send')
   const onPrimary = (): void => {
     if (primaryStops) {

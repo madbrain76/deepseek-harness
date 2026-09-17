@@ -80,7 +80,7 @@ function mountBar(shell: SessionInputShell, over?: { running?: boolean; disabled
       previewUrl: `blob:${id}`,
     })),
     toggleCommandMenu: vi.fn(),
-    useBusyEnter: bindSnapshotSelector(createSnapshotStore<'queue' | 'steer'>('queue')),
+    useBusyEnter: bindSnapshotSelector(createSnapshotStore<'queue' | 'steer' | 'interrupt'>('queue')),
     useNotices: bindSnapshotSelector(shell.notices),
     useLexicon: bindSnapshotSelector(shell.lexicon),
     useMenuLauncher: bindSnapshotSelector(createSnapshotStore<string | null>(null)),

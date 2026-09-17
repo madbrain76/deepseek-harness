@@ -29,6 +29,7 @@ const OPTIONS: readonly {
 }[] = [
   { id: 'queue', label: 'settings.enter.queue' },
   { id: 'steer', label: 'settings.enter.steer' },
+  { id: 'interrupt', label: 'settings.enter.interrupt' },
 ]
 
 /**
@@ -39,7 +40,7 @@ const OPTIONS: readonly {
 export function EnterBehaviorRow({ useBusyEnter, setBusyEnter, t }: EnterBehaviorRowProps) {
   const behavior = useBusyEnter(value => value)
   const [open, setOpen] = useState(false)
-  const selectedLabel = behavior === 'queue' ? 'settings.enter.queue' : 'settings.enter.steer'
+  const selectedLabel: ConversationKey = `settings.enter.${behavior}`
 
   return (
     <div className={css.row}>

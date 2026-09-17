@@ -12,7 +12,7 @@ import { SubagentError } from './error.ts'
 /** One Agent inbox destination, as the wire request selects it. */
 export type SubagentDelivery = SubagentPromptRequest['delivery']
 
-/** Delegate Queue and Steer to one live Agent until its Activation starts closing. */
+/** Delegate Queue, Steer, and Interrupt to one live Agent until its Activation starts closing. */
 export class SubagentInbox {
   private closingPromise: Promise<void> | undefined
 
@@ -41,7 +41,8 @@ export class SubagentInbox {
   /**
    * Submit through the Agent only while its Activation remains resident.
    * @param message - the accepted input to submit.
-   * @param delivery - whether to queue a distinct turn or steer the nearest step.
+   * @param delivery - whether to queue a turn, steer the nearest step, or cancel
+   * the active turn and queue a fresh one.
    */
   deliver(message: UserMessage, delivery: SubagentDelivery): void {
     if (this.closingPromise !== undefined) {
@@ -50,8 +51,14 @@ export class SubagentInbox {
         'ACTIVATION_CLOSING',
       )
     }
-    if (delivery === 'steer') this.agent.steer(message)
-    else this.agent.followup(message)
+    if (delivery === 'steer') {
+      this.agent.steer(message)
+      return
+    }
+    if (delivery === 'interrupt' && this.agent.status === 'running') {
+      this.agent.cancel({ kind: 'user' }, { keepInbox: true })
+    }
+    this.agent.followup(message)
   }
 
   /**

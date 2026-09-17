@@ -279,6 +279,63 @@ describe('Web session model selection', () => {
     await ctx.fiber.dispose()
   })
 
+  it('admits Interrupt before canceling the active turn and queues the message as a fresh turn', async () => {
+    const { ctx, agent, sessionId } = await harness()
+    const order: string[] = []
+    const cancel = vi.fn(() => { order.push('cancel') })
+    const followup = vi.fn((message: UserMessage) => { order.push(`followup:${message.content[0]?.type}`) })
+    Object.assign(agent, { cancel, followup })
+    const remote = createSessionTestRemote(ctx, {
+      defaultModelSelection: () => ({ provider: 'deepseek-official', model: 'deepseek-chat' }),
+      cwd: '/tmp',
+    })
+
+    const result = await remote.prompt(promptRequest({
+      sessionId,
+      mode: 'interrupt',
+      content: [{ type: 'text', text: 'use this instead' }],
+    }))
+
+    expect(result.ok).toBe(true)
+    expect(order).toEqual(['cancel', 'followup:text'])
+    expect(cancel).toHaveBeenCalledWith({ kind: 'user' }, { keepInbox: true })
+    expect((followup.mock.calls[0]?.[0] as UserMessage).content).toEqual([
+      { type: 'text', text: 'use this instead' },
+    ])
+    await ctx.fiber.dispose()
+  })
+
+  it('does not cancel when Interrupt admission fails or the target has already become idle', async () => {
+    const { ctx, agent, sessionId } = await harness()
+    const cancel = vi.fn()
+    const followup = vi.fn()
+    Object.assign(agent, { cancel, followup })
+    const remote = createSessionTestRemote(ctx, {
+      defaultModelSelection: () => ({ provider: 'deepseek-official', model: 'deepseek-chat' }),
+      cwd: '/tmp',
+    })
+
+    const rejected = await remote.prompt(promptRequest({
+      sessionId,
+      mode: 'interrupt',
+      content: [{ type: 'image', mediaType: 'image/png', data: 'not-base64' }],
+    }))
+    expect(rejected.ok).toBe(false)
+    expect(cancel).not.toHaveBeenCalled()
+    expect(followup).not.toHaveBeenCalled()
+
+    Object.defineProperty(agent, 'status', { configurable: true, value: 'idle' })
+    const accepted = await remote.prompt(promptRequest({
+      sessionId,
+      mode: 'interrupt',
+      content: [{ type: 'text', text: 'the turn already ended' }],
+    }))
+    expect(accepted.ok).toBe(true)
+    expect(cancel).not.toHaveBeenCalled()
+    expect(followup).toHaveBeenCalledOnce()
+    await ctx.fiber.dispose()
+  })
+
   it('allows a text-only selection while durable or pending images remain available for later models', async () => {
     const { ctx, agent, sessionId } = await harness()
     registerTextOnly(ctx)

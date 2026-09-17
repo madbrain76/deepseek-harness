@@ -93,11 +93,13 @@ describe('beginSubmission', () => {
     session.handleRunning(true)
     session.beginSubmission({ mode: 'queue', text: '排队', attachments: [] })
     session.beginSubmission({ mode: 'steer', text: '纠偏', attachments: [] })
+    session.beginSubmission({ mode: 'interrupt', text: '中断并换轮', attachments: [] })
     session.handleRunning(false)
     expect(session.getSnapshot().pendingSubmissions.map(({ text, placement }) => ({ text, placement }))).toEqual([
       { text: '空闲', placement: 'transcript' },
       { text: '排队', placement: 'queued' },
       { text: '纠偏', placement: 'steering' },
+      { text: '中断并换轮', placement: 'queued' },
     ])
   })
 

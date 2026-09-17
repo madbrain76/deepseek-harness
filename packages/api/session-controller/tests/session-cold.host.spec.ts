@@ -792,7 +792,7 @@ describe('sessions.prompt synchronous rejection', () => {
     } as unknown as Agent)
     const remote = createSessionTestRemote(ctx, { defaultModelSelection: () => ({ provider: 'p', model: 'm' }), cwd: '/tmp' })
 
-    for (const mode of ['queue', 'steer'] as const) {
+    for (const mode of ['queue', 'steer', 'interrupt'] as const) {
       const response = await remote.prompt(promptRequest({
         sessionId: session.id, mode, content: [{ type: 'text' as const, text: 'x' }],
       }))

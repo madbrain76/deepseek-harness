@@ -43,7 +43,7 @@ function childRow(id: SessionId, activity: 'running' | 'inactive'): SubagentList
   return { kind: 'child', id, mode: 'continuable', label: 'worker', activity, hasChildren: false }
 }
 
-function promptRequest(clientTimeZone?: string, delivery: 'queue' | 'steer' = 'queue') {
+function promptRequest(clientTimeZone?: string, delivery: 'queue' | 'steer' | 'interrupt' = 'queue') {
   return {
     requestId: REQUEST_ID,
     parentSessionId: PARENT,
@@ -275,6 +275,16 @@ describe('subagent prompt Remote', () => {
     await expect(subagents.prompt(promptRequest(undefined, 'steer'), signal))
       .resolves.toEqual({ messageId: 'm-steer' })
     expect(delivery.mock.calls[0]?.[5]).toBe('steer')
+  })
+
+  it('passes interrupt delivery through the same admission operation', async () => {
+    const { subagents } = await bench({ [PARENT]: { status: 'running' } })
+    vi.spyOn(subagents, 'listChildren').mockResolvedValue([childRow(CHILD, 'running')])
+    const delivery = promptDelivery(subagents).mockResolvedValue('m-interrupt' as MessageId)
+
+    await expect(subagents.prompt(promptRequest(undefined, 'interrupt'), signal))
+      .resolves.toEqual({ messageId: 'm-interrupt' })
+    expect(delivery.mock.calls[0]?.[5]).toBe('interrupt')
   })
 
   it('omits the zone from the durable source when the browser reported none', async () => {

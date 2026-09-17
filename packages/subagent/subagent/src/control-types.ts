@@ -102,8 +102,8 @@ export interface SubagentPromptRequest {
   readonly childSessionId: SessionId
   /** Required discriminator retained from the browser control address. */
   readonly mode: 'continuable'
-  /** Whether this message queues a later turn or targets the nearest step. */
-  readonly delivery: 'queue' | 'steer'
+  /** Whether this message queues a turn, targets the nearest step, or replaces the active turn. */
+  readonly delivery: 'queue' | 'steer' | 'interrupt'
   /**
    * Browser prompt parts delivered as the child's user message. The Host
    * admits and persists image parts before delivery, so the wire never

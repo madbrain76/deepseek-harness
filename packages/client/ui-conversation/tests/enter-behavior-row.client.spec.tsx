@@ -38,7 +38,7 @@ function noPendingInteraction() {
 
 function mount() {
   const policy = new ComposerSubmissionPolicy()
-  const setBusyEnter = vi.fn((behavior: 'queue' | 'steer') => { policy.setBusyEnter(behavior) })
+  const setBusyEnter = vi.fn((behavior: 'queue' | 'steer' | 'interrupt') => { policy.setBusyEnter(behavior) })
   const props: EnterBehaviorRowProps = {
     usePanelInfo: selector => selector({ activePanelId: null }),
     useSessions: emptySessions(),
@@ -57,7 +57,7 @@ describe('EnterBehaviorRow', () => {
   it('explains the busy-only scope over Enter and Send and shows Queue by default', () => {
     mount()
     expect(screen.getByText('Send behavior while busy')).toBeDefined()
-    expect(screen.getByText('What Enter and the Send button do while the agent is running; Cmd/Ctrl+Enter uses the other behavior')).toBeDefined()
+    expect(screen.getByText('What Enter and the Send button do while the agent is running; Cmd/Ctrl+Enter uses Queue or Steer')).toBeDefined()
     expect(screen.getByRole('button', { name: /Queue/ }).getAttribute('aria-expanded')).toBe('false')
   })
 
@@ -75,5 +75,13 @@ describe('EnterBehaviorRow', () => {
     expect(screen.getByRole('menuitem', { name: 'Steer' })).toBeDefined()
     fireEvent.pointerDown(document.body)
     expect(screen.queryByRole('menuitem', { name: 'Steer' })).toBeNull()
+  })
+
+  it('selects Interrupt and send through the same persisted preference control', () => {
+    const b = mount()
+    fireEvent.click(screen.getByRole('button', { name: /Queue/ }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Interrupt and send' }))
+    expect(b.setBusyEnter).toHaveBeenCalledWith('interrupt')
+    expect(screen.getByRole('button', { name: /Interrupt and send/ })).toBeDefined()
   })
 })

@@ -159,7 +159,7 @@ function humanPrompt(
   parent: Agent,
   childId: SessionId,
   text: string,
-  delivery: 'queue' | 'steer',
+  delivery: 'queue' | 'steer' | 'interrupt',
 ) {
   return ctx.subagents.prompt({
     requestId: `request-${text}` as SubagentPromptRequestId,
@@ -1081,6 +1081,37 @@ describe('continuable human steering delivery', () => {
       && event.data.target === 'next-step'
       && event.data.inserted.some(message => message.id === receipt.messageId))).toBe(true)
     expect(hasUserText(loaded.events, 'cold steer')).toBe(true)
+  })
+})
+
+describe('continuable human interrupt delivery', () => {
+  it('cancels the active child turn and preserves repeated messages as FIFO fresh turns', async () => {
+    const release = Promise.withResolvers<undefined>()
+    const adapter = new GatedAdapter([
+      { chunks: textResponse('superseded'), gate: release.promise },
+      { chunks: textResponse('first replacement') },
+      { chunks: textResponse('second replacement') },
+    ])
+    const { ctx, parent } = await setupWith(adapter)
+    parkParent(ctx, parent)
+    const started = await ctx.subagents.startContinuable(startSpec(parent))
+    await vi.waitFor(() => { expect(adapter.requests).toHaveLength(1) })
+    const child = ctx.agents.get(started.childId)!
+
+    const first = await humanPrompt(ctx, parent, started.childId, 'first interrupt', 'interrupt')
+    const second = await humanPrompt(ctx, parent, started.childId, 'second interrupt', 'interrupt')
+
+    expect(adapter.requests[0]?.signal?.aborted).toBe(true)
+    expect(child.inbox.nextStep).toEqual([])
+    expect(child.inbox.nextTurn).toEqual([
+      expect.objectContaining({ id: first.messageId, content: message('first interrupt') }),
+      expect.objectContaining({ id: second.messageId, content: message('second interrupt') }),
+    ])
+
+    release.resolve(undefined)
+    await waitNoActivation(ctx, started.childId)
+    const loaded = await loadStoredSession(ctx.sessionPersistence, started.childId)
+    expect(userTexts(loaded.events)).toEqual(['child task', 'first interrupt', 'second interrupt'])
   })
 })
 

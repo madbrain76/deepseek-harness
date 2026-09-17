@@ -1,7 +1,7 @@
 /**
  * Composer submission policy. It owns the live busy-Enter preference and
- * resolves submission gestures into queue/steer delivery modes; Host and
- * Agent keep the actual delivery-window authority.
+ * resolves submission gestures into queue/steer/interrupt delivery modes;
+ * Host and Agent keep the actual delivery-window authority.
  */
 import {
   createSnapshotStore, type SnapshotStore,
@@ -20,12 +20,14 @@ export { DEFAULT_BUSY_ENTER_BEHAVIOR } from '../../submission-settings.ts'
  * Enter and the primary Send button share the `enter` gesture, so the button
  * delivers exactly what Enter would. Direct `steer` is intentionally
  * best-effort: AgentLoop turns a closed-window submission into the next waking
- * Queue item.
+ * Queue item. Interrupt submits a fresh Queue turn and cancels the active turn
+ * in one Host operation.
  * @param preferred - the live busy-Enter preference.
  * @param running - whether the addressed agent currently reports busy.
  * @param gesture - plain Enter (or the Send button) or the Cmd/Ctrl-accelerated chord.
  * @param steeringAvailable - whether this session transport supports steering.
- * @returns Queue outside steer-capable busy state; otherwise the preferred mode or its opposite.
+ * @returns Queue outside steer-capable busy state; otherwise the preferred mode,
+ * or Queue/Steer for the accelerated chord.
  */
 export function resolveSubmitMode(
   preferred: BusyEnterBehavior,
@@ -65,7 +67,7 @@ export class ComposerSubmissionPolicy {
   /**
    * Change the busy-state submission behavior; the live value publishes
    * before the durable write starts.
-   * @param behavior - Queue or Steer.
+   * @param behavior - Queue, Steer, or Interrupt.
    */
   setBusyEnter(behavior: BusyEnterBehavior): void {
     if (this.busyEnter.getSnapshot() === behavior) return

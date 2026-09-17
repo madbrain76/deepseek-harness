@@ -23,6 +23,8 @@ describe('ui-conversation host', () => {
     expect(ctx.settings.get(ns)).toEqual({ busyEnter: DEFAULT_BUSY_ENTER_BEHAVIOR })
     await ctx.settings.update(ns, { busyEnter: 'steer' })
     expect(ctx.settings.get(ns)).toEqual({ busyEnter: 'steer' })
+    await ctx.settings.update(ns, { busyEnter: 'interrupt' })
+    expect(ctx.settings.get(ns)).toEqual({ busyEnter: 'interrupt' })
     await expect(ctx.settings.update(ns, { busyEnter: 'invalid' })).rejects.toThrow()
     await fiber.dispose()
     expect(ctx.settings.describe().map(row => row.ns)).not.toContain(ns)

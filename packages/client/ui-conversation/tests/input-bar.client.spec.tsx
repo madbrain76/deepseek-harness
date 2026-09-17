@@ -97,7 +97,7 @@ interface BenchOptions {
   fileUploads?: DraftFileUploads
   addFiles?: (files: readonly File[]) => string | null
   commandMenuOpen?: boolean
-  busyEnter?: 'queue' | 'steer'
+  busyEnter?: 'queue' | 'steer' | 'interrupt'
   toggleCommandMenu?: (selection: { start: number; end: number }) => void
 }
 
@@ -114,7 +114,7 @@ function bench(over?: BenchOptions) {
   const sink = vi.fn<(
     text: string,
     attachmentIds: readonly DraftAttachmentId[],
-    mode: 'queue' | 'steer',
+    mode: 'queue' | 'steer' | 'interrupt',
     signal: AbortSignal,
   ) => Promise<SubmitOutcome>>(() => Promise.resolve({ kind: 'success' }))
   const lex = over?.lexicon
@@ -151,7 +151,7 @@ function bench(over?: BenchOptions) {
   const stop = vi.fn()
   const removeAttachment = vi.fn((id: DraftAttachmentId) => { shell.removeAttachment(id) })
   const menuLauncher = createSnapshotStore<string | null>(over?.commandMenuOpen === true ? 'command' : null)
-  const busyEnter = createSnapshotStore<'queue' | 'steer'>(over?.busyEnter ?? 'queue')
+  const busyEnter = createSnapshotStore<'queue' | 'steer' | 'interrupt'>(over?.busyEnter ?? 'queue')
   const slotCalls: { key: string; owner: unknown }[] = []
   const renderSlot = ((key: string, owner: object) => {
     slotCalls.push({ key, owner })
@@ -234,7 +234,7 @@ function bench(over?: BenchOptions) {
   const primaryLabel = primaryStops
     ? '停止生成'
     : over?.running === true && steeringAvailable && !composerLocked && plainMessageDraft
-      ? (over.busyEnter === 'steer' ? '插话发送' : '排队发送')
+      ? ({ queue: '排队发送', steer: '插话发送', interrupt: '中断并发送' } as const)[over.busyEnter ?? 'queue']
       : '发送消息'
   const button = view.container.querySelector<HTMLButtonElement>(`button[aria-label="${primaryLabel}"]`)!
   const interruptButton = view.container.querySelector<HTMLButtonElement>('button[aria-label="停止生成"]')
@@ -826,6 +826,13 @@ describe('running and lock semantics', () => {
     expect(sink).toHaveBeenCalledWith('按钮插话', [], 'steer', expect.any(AbortSignal))
   })
 
+  it('running Send follows the busy-state Interrupt preference and labels the delivery', () => {
+    const { button, sink } = bench({ running: true, busyEnter: 'interrupt', draft: '立即换轮' })
+    expect(button.getAttribute('aria-label')).toBe('中断并发送')
+    fireEvent.click(button)
+    expect(sink).toHaveBeenCalledWith('立即换轮', [], 'interrupt', expect.any(AbortSignal))
+  })
+
   it('running Send relabels when the busy-state preference changes live', () => {
     const { button, busyEnter, sink } = bench({ running: true, draft: '跟随设置' })
     expect(button.getAttribute('aria-label')).toBe('排队发送')
@@ -922,6 +929,16 @@ describe('running and lock semantics', () => {
     const { textarea, sink } = bench({ running: true, busyEnter: 'steer', draft: '直接插话' })
     fireEvent.keyDown(textarea, { key: 'Enter' })
     expect(sink).toHaveBeenCalledWith('直接插话', [], 'steer', expect.any(AbortSignal))
+  })
+
+  it('running plain Enter interrupts while the accelerated chord queues', () => {
+    const plain = bench({ running: true, busyEnter: 'interrupt', draft: '中断并换轮' })
+    fireEvent.keyDown(plain.textarea, { key: 'Enter' })
+    expect(plain.sink).toHaveBeenCalledWith('中断并换轮', [], 'interrupt', expect.any(AbortSignal))
+
+    const accelerated = bench({ running: true, busyEnter: 'interrupt', draft: '仅排队' })
+    fireEvent.keyDown(accelerated.textarea, { key: 'Enter', ctrlKey: true })
+    expect(accelerated.sink).toHaveBeenCalledWith('仅排队', [], 'queue', expect.any(AbortSignal))
   })
 
   it('running Cmd/Ctrl+Enter uses the opposite of the busy-state Enter preference', () => {

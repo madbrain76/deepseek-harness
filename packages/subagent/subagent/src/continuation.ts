@@ -42,6 +42,7 @@ import { foldSubagentDescriptor, snapshotSubagentDescriptor } from './descriptor
 import { establishCatalogChild } from './catalog.ts'
 import { SubagentError } from './error.ts'
 import { isAdjacentAgentSendMessageTool } from './internal.ts'
+import type { SubagentDelivery } from './inbox.ts'
 import type { ActivationObserver } from './lifecycle.ts'
 import type {
   ContinuableCreateRequest,
@@ -63,7 +64,11 @@ type ChildDeliveryOptions =
     readonly source?: MessageSource
     readonly signal: AbortSignal
   }
-  | { readonly delivery: 'queue'; readonly source: MessageSource; readonly signal: AbortSignal }
+  | {
+    readonly delivery: 'queue' | 'interrupt'
+    readonly source: MessageSource
+    readonly signal: AbortSignal
+  }
 
 /** Package-private hooks supplied by the owning service. */
 interface ContinuationHost {
@@ -267,6 +272,27 @@ export class SubagentContinuationManager {
     signal: AbortSignal,
   ): Promise<MessageId> {
     return this.deliverToChild(parent, childId, content, { source, signal, delivery: 'steer' })
+  }
+
+  /**
+   * Deliver one human-authored prompt using its requested live-Agent behavior.
+   * @param parent - exact live direct parent authorizing delivery.
+   * @param childId - durable direct-child session id.
+   * @param content - model-visible prompt blocks.
+   * @param source - durable attribution for the human prompt.
+   * @param signal - caller cancellation before inbox acceptance.
+   * @param delivery - Queue, Steer, or Interrupt behavior.
+   * @returns the accepted durable message id.
+   */
+  async deliverPrompt(
+    parent: Agent,
+    childId: SessionId,
+    content: ContentBlock[],
+    source: MessageSource,
+    signal: AbortSignal,
+    delivery: SubagentDelivery,
+  ): Promise<MessageId> {
+    return this.deliverToChild(parent, childId, content, { source, signal, delivery })
   }
 
   /** Route one parent-originated delivery through residency and cold resume. */

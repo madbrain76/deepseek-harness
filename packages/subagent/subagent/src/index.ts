@@ -261,7 +261,8 @@ export class SubagentRuntime extends TypertRemoteService {
    * @param content - host-authored content to deliver.
    * @param source - durable host-protocol provenance.
    * @param signal - caller cancellation before inbox acceptance.
-   * @param delivery - Queue as a distinct turn or Steer at the nearest step.
+   * @param delivery - Queue as a distinct turn, Steer at the nearest step, or
+   * Interrupt as a fresh turn after canceling the active one.
    * @returns the accepted message's inbox id.
    */
   private [deliverSubagentPrompt](
@@ -272,9 +273,14 @@ export class SubagentRuntime extends TypertRemoteService {
     signal: AbortSignal,
     delivery: SubagentDelivery,
   ): Promise<MessageId> {
-    return delivery === 'steer'
-      ? this.requireContinuations().steerPrompt(parent, childId, content, source, signal)
-      : this.requireContinuations().queuePrompt(parent, childId, content, source, signal)
+    return this.requireContinuations().deliverPrompt(
+      parent,
+      childId,
+      content,
+      source,
+      signal,
+      delivery,
+    )
   }
 
   /**
