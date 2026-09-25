@@ -1,6 +1,19 @@
-# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
-# side as of the last confirmed-consistent state. Both languages carry equal authority;
-# after editing either side, bring the other along and re-record with:
+# Bilingual-pair consistency record for 2026-09-10-web-all-interfaces-bind.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/bug-fix/2026-09-10-web-all-interfaces-bind.md
-2026-09-10-web-all-interfaces-bind.md: cae5a00b7c43c44c6be5ae69fd757a51ef0ace8f
-2026-09-10-web-all-interfaces-bind.zh.md: fc771d807e9739ded26fd310a892ee4933f32621
+/agent-note-explicit-web-all-interfaces-binding:
+  en: 43e25c4709f93752
+  zh: 5b58d319ec8c506a
+/agent-note-explicit-web-all-interfaces-binding/problem:
+  en: c8994b0e49cb9694
+  zh: 8e1de77722580fbb
+/agent-note-explicit-web-all-interfaces-binding/decision:
+  en: 2d2c36b7235378a1
+  zh: f78fd7e3834d8e04
+/agent-note-explicit-web-all-interfaces-binding/alternatives-considered:
+  en: 3dbedfaee2ae3e41
+  zh: aa15d42f3890af63
+/agent-note-explicit-web-all-interfaces-binding/consequences:
+  en: dd100cffb5415540
+  zh: 24ec280d03deb80f

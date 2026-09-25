@@ -1,6 +1,19 @@
-# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
-# side as of the last confirmed-consistent state. Both languages carry equal authority;
-# after editing either side, bring the other along and re-record with:
+# Bilingual-pair consistency record for 2026-09-10-busy-enter-interrupt-submit.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-09-10-busy-enter-interrupt-submit.md
-2026-09-10-busy-enter-interrupt-submit.md: 35687d4457c3d1667651369da5fe9157ce7a1d60
-2026-09-10-busy-enter-interrupt-submit.zh.md: 0f2200d4ce86d4093e60a53795c422753efa4a80
+/agent-note-busy-enter-interrupt-and-submit-delivery:
+  en: 3c4293d8f5f4215e
+  zh: dc2492841144c40a
+/agent-note-busy-enter-interrupt-and-submit-delivery/problem:
+  en: 32c0a2835b9a07b5
+  zh: 03c9a52f6b780e9c
+/agent-note-busy-enter-interrupt-and-submit-delivery/decision:
+  en: e579a887d75a3243
+  zh: f58e56d353ece5d5
+/agent-note-busy-enter-interrupt-and-submit-delivery/alternatives-considered:
+  en: 3f73a5c632af0e56
+  zh: 3858ad3dd15662f6
+/agent-note-busy-enter-interrupt-and-submit-delivery/consequences:
+  en: 5b093236e09220eb
+  zh: 51240a6deea9b3ee
