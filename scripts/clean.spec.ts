@@ -82,6 +82,23 @@ describe('RepositoryCleaner', () => {
     expect(existsSync(join(root, 'native/system/tsconfig.tsbuildinfo'))).toBe(false)
   })
 
+  it('removes a direct declaration output without removing its lib siblings', async () => {
+    const root = fixture()
+    write(join(root, 'tsconfig.json'), JSON.stringify({ files: [], references: [{ path: './tsconfig.desktop-keyboard-tests.json' }] }))
+    write(join(root, 'tsconfig.desktop-keyboard-tests.json'), JSON.stringify({
+      compilerOptions: { composite: true, outDir: 'lib/desktop-keyboard-test-types' },
+      include: ['apps/desktop/tests'],
+    }))
+    write(join(root, 'apps/desktop/tests/keyboard.spec.ts'), 'export {}\n')
+    write(join(root, 'lib/desktop-keyboard-test-types/keyboard.spec.d.ts'))
+    write(join(root, 'lib/unrelated.js'))
+
+    await new RepositoryCleaner(root).clean()
+
+    expect(existsSync(join(root, 'lib/desktop-keyboard-test-types'))).toBe(false)
+    expect(existsSync(join(root, 'lib/unrelated.js'))).toBe(true)
+  })
+
   it('refuses project outputs reached through a symlink outside the repository', async () => {
     const root = fixture()
     const externalProject = fixture()
